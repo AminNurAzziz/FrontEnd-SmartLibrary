@@ -1,17 +1,115 @@
-import React from 'react';
+import React, { useState, useEffect, } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Container, Typography, Grid, Card, CardHeader, CardContent, List, ListItem, ListItemText, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, Button, CardMedia } from '@mui/material';
+import { Container, Typography, Grid, Card, CardHeader, CardContent, List, ListItem, ListItemText, Table, TableContainer, TableHead, TableBody, TableRow, TableCell, Button, CardMedia, CircularProgress, } from '@mui/material';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
 import Header from './HeaderNavigation';
 import illustrationImage from '../assets/logo/library.png';
+import { useNavigate } from 'react-router-dom';
+
+import SearchBookModal from './SearchBookModal';
+import BookDetailModal from './DetailBookModal';
 
 const StudentInfo = () => {
     const location = useLocation();
-    const { studentData, borrowedBooks } = location.state || {};
+    const { studentData, borrowedBooks, login, regulationData } = location?.state || {};
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+    const [isDetailBookModalOpen, setIsDetailBookModalOpen] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [selectedBook, setSelectedBook] = useState(null);
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [notFound, setNotFound] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+
+
+    const handleSearch = (searchTerm) => {
+        setSelectedBook(searchTerm);
+        setIsDetailBookModalOpen(true);
+        setIsSearchModalOpen(false);
+    };
+
+    const handleSelectBook = (bookData) => {
+        if (borrowedBooks.length !== 2) {
+            handleNotFound();
+            setSnackbarMessage('You have reached the maximum limit of borrowed books');
+        } else {
+            {
+                // Gunakan concat atau operator spread untuk menggabungkan hasil pencarian baru dengan yang sudah ada
+                setSearchResults((prevSearchResults) => prevSearchResults.concat(bookData));
+                console.log('Search resultsssssssssasdasdsaadsssssssssssssssssssssss:', searchResults);
+                setIsDetailBookModalOpen(false);
+            }
+        }
+    };
+
+    const handleNotFound = () => {
+        setNotFound(!notFound);
+        setSnackbarMessage('Book not found. Please try again.');
+    };
+    const handleRemoveBook = (bookId) => {
+        setSearchResults((prevSearchResults) => prevSearchResults.filter((book) => book.id !== bookId));
+    };
+
+    const handleBorrowBooks = () => {
+        setLoading(true);
+        // Lakukan permintaan POST ke URL API
+        fetch('http://127.0.0.1:8000/api/peminjaman-buku', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'nim': '2141762034' // Tambahkan header nim
+            },
+            body: JSON.stringify({
+                buku_pinjam: searchResults.map((book) => ({ kode_buku: book.book_code })) // Ambil kode buku dari searchResults
+            })
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data && data.message) {
+                    navigate('/borrow-receipt', { replace: true, state: { receiptData: data } });
+                } else {
+                    console.error('Invalid data format:', data);
+                }
+
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+    const handleExtendBook = (bookId) => {
+        setSearchResults((prevSearchResults) =>
+            prevSearchResults.map((book) => {
+                if (book.id === bookId && !book.extended) { // Periksa apakah buku belum pernah diperpanjang
+                    // Hitung tanggal pengembalian yang diperpanjang
+                    const extendedReturnDate = new Date(new Date(book.return_date).getTime() + book.max_loan_days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                    // Perbarui tanggal pengembalian buku dan tandai buku sebagai sudah diperpanjang
+                    return { ...book, return_date: extendedReturnDate, extended: true };
+                }
+                return book;
+            })
+        );
+    };
+
+    useEffect(() => {
+        if (!login || !location.state) {
+            navigate('/');
+        }
+    }, [login, navigate]);
+
+    useEffect(() => {
+        console.log('Selected book:', selectedBook);
+        console.log('Search results:', searchResults);
+        console.log('Borrsssssssssssssssssssssssssowed books:', regulationData);
+    }, [selectedBook]);
 
     return (
         <main>
             <Header />
-            <Container sx={{ mt: 4, height: '100vh', overflow: 'auto' }}>
+            <Container sx={{ mt: 4 }}>
                 <Grid container spacing={3}>
                     {/* Left Section */}
                     <Grid item xs={12} sm={6} md={8}>
@@ -34,7 +132,7 @@ const StudentInfo = () => {
                                                     backgroundColor: '#899dc4',
                                                 },
                                             }}
-                                            onClick={() => console.log("Scan QR Code clicked")}
+                                            onClick={() => { }}
                                         >
                                             Scan Book
                                         </Button>
@@ -50,7 +148,7 @@ const StudentInfo = () => {
                                                     backgroundColor: '#899dc4',
                                                 },
                                             }}
-                                            onClick={() => console.log("Search Book clicked")}
+                                            onClick={() => setIsSearchModalOpen(true)}
                                         >
                                             <b>Search Book</b>
                                         </Button>
@@ -103,7 +201,7 @@ const StudentInfo = () => {
                 {borrowedBooks && borrowedBooks.length > 0 && (
                     <TableContainer sx={{ mt: 4 }}>
                         <Typography variant="h5" gutterBottom align="center" sx={{ color: '#0f1f40', mb: 2 }}>Borrowed Books</Typography>
-                        <Table sx={{ backgroundColor: '#ffffff', border: '2px solid #e6f2ff', borderRadius: '40px' }}> {/* Add borderRadius styling here */}
+                        <Table sx={{ backgroundColor: '#ffffff', border: '2px solid #e6f2ff', borderRadius: '40px' }}>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#e6f2ff', color: 'white' }}>
                                     <TableCell sx={{ color: '#0f1f40', fontWeight: 'bold' }}>Title</TableCell>
@@ -115,51 +213,69 @@ const StudentInfo = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {borrowedBooks.map(renderBorrowedBook)}
+                                {borrowedBooks.map((book, index) => renderBorrowedBook(book, index, regulationData))}
+
+                            </TableBody>
+                            <TableBody>
+                                {searchResults.map((bookDatas, index) => renderSearchBook(bookDatas, index, handleRemoveBook, handleExtendBook))}
+
                             </TableBody>
                         </Table>
                     </TableContainer>
                 )}
             </Container>
+            <SearchBookModal open={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)} onSearch={handleSearch} notFound={handleNotFound} />
+            <BookDetailModal open={isDetailBookModalOpen} onClose={() => setIsDetailBookModalOpen(false)} bookData={selectedBook && selectedBook[0]} onSelect={handleSelectBook} />
+            <Button
+                variant="contained"
+                sx={{ mb: 4, mt: 1 }}
+                onClick={handleBorrowBooks}
+                disabled={searchResults.length === 0}
+            >
+                Pinjam Buku
+            </Button>
+            {loading && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(255, 255, 255, 0.5)', zIndex: 9999 }}>
+                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                        <CircularProgress color="inherit" />
+                        <Typography variant="body1" style={{ marginTop: '16px', color: '#333' }}>Sedang memproses peminjaman buku...</Typography>
+                    </div>
+                </div>
+            )}
+            <Snackbar
+                open={notFound}
+                autoHideDuration={6000}
+                onClose={() => setNotFound(false)} // Ubah notFound menjadi false saat snackbar ditutup
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <MuiAlert elevation={6} variant="filled" onClose={() => setNotFound(false)} severity="error">
+                    {snackbarMessage} {/* Gunakan snackbarMessage sebagai isi snackbar */}
+                </MuiAlert>
+            </Snackbar>
         </main >
     );
 };
 
-const renderStudentDetails = (studentData) => {
-    return (
-        <>
-            <ListItem sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                <ListItemText primary={`ID: ${studentData.id}`} />
-            </ListItem>
-            <ListItem sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                <ListItemText primary={`NIM: ${studentData.nim}`} />
-            </ListItem>
-            <ListItem sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                <ListItemText primary={`Name: ${studentData.student_name}`} />
-            </ListItem>
-            <ListItem sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                <ListItemText primary={`Major: ${studentData.major}`} />
-            </ListItem>
-            <ListItem sx={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                <ListItemText primary={`Email: ${studentData.email}`} />
-            </ListItem>
-            <ListItem>
-                <ListItemText primary={`Status: ${studentData.status}`} />
-            </ListItem>
-        </>
-    );
-};
-
-const renderBorrowedBook = (book, index) => {
+const renderBorrowedBook = (book, index, regulationData) => {
+    console.log('Regulation daaaaaaaaaaaaaaaaaaata:', regulationData);
     const borrowDate = new Date(book.borrow_date);
     const returnDate = new Date(book.return_date);
-    const twoDaysLater = new Date();
-    twoDaysLater.setDate(borrowDate.getDate() + 10);
+    const max_loan_days = regulationData.max_loan_days;
 
-    const isExtendDisabled = returnDate <= twoDaysLater;
+    // Calculate the range in milliseconds
+    const rangeInMilliseconds = returnDate.getTime() - borrowDate.getTime();
+
+    // Convert milliseconds to days
+    const rangeInDays = Math.ceil(rangeInMilliseconds / (1000 * 60 * 60 * 24));
+
+    console.log('Range in days:', rangeInDays);
+    console.log('Max loan days:', max_loan_days);
+
+    // Check if the book can be extended
+    const isExtendDisabled = rangeInDays > max_loan_days;
+
     return (
         <TableRow key={index}>
-
             <TableCell>{book.book_title}</TableCell>
             <TableCell>{book.borrow_date}</TableCell>
             <TableCell>{book.return_date}</TableCell>
@@ -177,5 +293,37 @@ const renderBorrowedBook = (book, index) => {
         </TableRow>
     );
 };
+
+const renderSearchBook = (bookDatas, index, handleRemoveBook, handleExtendBook) => {
+    console.log('Book data:', bookDatas);
+    return (
+        <TableRow key={index}>
+            <TableCell>{bookDatas.book_title}</TableCell>
+            <TableCell>{bookDatas.borrow_date}</TableCell>
+            <TableCell>{bookDatas.return_date}</TableCell>
+            <TableCell>Available</TableCell>
+            <TableCell>
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handleRemoveBook(bookDatas.id)}
+                >
+                    Remove
+                </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleExtendBook(bookDatas.id)}
+                    disabled={bookDatas.extended} // Disable tombol jika buku sudah diperpanjang
+                >
+                    Extend
+                </Button>
+            </TableCell>
+        </TableRow>
+    );
+};
+
+
+
 
 export default StudentInfo;

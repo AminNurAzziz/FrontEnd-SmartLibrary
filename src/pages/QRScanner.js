@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import QrScanner from 'qr-scanner';
 import { useNavigate } from 'react-router-dom';
-import { Button, CircularProgress, Typography, Backdrop } from '@mui/material';
+import { Button, CircularProgress, Typography, Snackbar, } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
 import Header from './HeaderScanner';
 
 // Set WORKER_PATH to the relative path of qr-scanner-worker.min.js
@@ -12,11 +13,15 @@ const QRScanner = () => {
     const [scanResult, setScanResult] = useState('');
     const [studentData, setStudentData] = useState(null);
     const [borrowedBooks, setBorrowedBooks] = useState([]);
+    const [regulationData, setRegulationData] = useState(null);
     const navigate = useNavigate();
     const [isScanning, setIsScanning] = useState(false);
     const [showResetButton, setShowResetButton] = useState(false);
     const [showBorder, setShowBorder] = useState(false);
     const [isLoading, setIsLoading] = useState(false); // State for loading page
+    const [notFound, setNotFound] = useState(false);
+    const [openSnackbar, setOpenSnackbar] = useState(false);
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         if (isScanning) {
@@ -29,25 +34,74 @@ const QRScanner = () => {
                 try {
                     const headers = new Headers();
                     headers.append('NIM', result);
+                    let responsePeminjaman = null;
+                    let response = null;
+                    let responseRegulation = null;
 
-                    const response = await fetch('http://127.0.0.1:8000/api/student', {
-                        method: 'GET',
-                        headers: headers
-                    });
+                    if (result.startsWith('KD-P')) {
+                        console.log('Peminjaman');
+                        responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/KD-P1183614683p3v', {
+                            method: 'GET',
+                        });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        setStudentData(data.student);
-                        setBorrowedBooks(data.borrowed_data);
+                        if (responsePeminjaman.ok) {
+                            const data = await responsePeminjaman.json();
+                            setBorrowedBooks(data);
+                            console.log('Data Peminjaman:', data);
 
-                        setTimeout(() => {
+                            setTimeout(() => {
+                                setIsLoading(false);
+                                navigate('/get-loan', { state: { dataPeminjaman: data } });
+                            }, 1000); // Set the duration of loading here (in milliseconds)
+
+                        } else {
+                            setMessage('Data borrowed books not found');
+                            setNotFound(true);
                             setIsLoading(false);
+                            setOpenSnackbar(true);
+                            console.error('Error fetching borrowed books:', responsePeminjaman.statusText);
+                        }
 
-                            navigate('/student', { state: { studentData: data.student, borrowedBooks: data.borrowed_data } });
-                        }, 1000); // Set the duration of loading here (in milliseconds)
+                    } else if (!isNaN(result)) {
+                        response = await fetch('http://127.0.0.1:8000/api/student', {
+                            method: 'GET',
+                            headers: headers
+                        });
 
+                        responseRegulation = await fetch('http://127.0.0.1:8000/api/regulation', {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        });
+
+
+                        if (response.ok && responseRegulation.ok) {
+                            const data = await response.json();
+                            const regulation = await responseRegulation.json();
+                            setStudentData(data.student);
+                            setBorrowedBooks(data.borrowed_data);
+                            setRegulationData(regulation);
+
+
+                            setTimeout(() => {
+                                setIsLoading(false);
+                                navigate('/student', { state: { studentData: data.student, borrowedBooks: data.borrowed_data, login: true, regulationData: regulation } });
+                            }, 1000); // Set the duration of loading here (in milliseconds)
+
+                        } else {
+                            setMessage('Data student not found');
+                            setNotFound(true);
+                            setIsLoading(false);
+                            setOpenSnackbar(true);
+                        }
                     } else {
+                        setMessage('Data not found');
+                        setNotFound(true);
+                        setIsLoading(false);
+                        setOpenSnackbar(true);
                         console.error('Error fetching student info:', response.statusText);
+
                     }
                 } catch (error) {
                     console.error('Error fetching student info:', error);
@@ -69,12 +123,18 @@ const QRScanner = () => {
 
     const handleScan = () => {
         setIsScanning(true); // Set scanning state to true when starting scan
+        setNotFound(false); // Reset notFound state to false when starting scan
     };
 
     const handleReset = () => {
         setIsScanning(false); // Set scanning state to false when resetting
         setScanResult(''); // Clear scan result when resetting
         setShowBorder(false); // Hide the border when resetting
+    };
+
+
+    const handleCloseSnackbar = () => {
+        setOpenSnackbar(false);
     };
 
     return (
@@ -88,13 +148,15 @@ const QRScanner = () => {
                     Scan to start borrowing available books
                 </Typography>
 
-                {isLoading ? ( // Render CircularProgress if loading
+                {isLoading && ( // Render CircularProgress if loading
 
                     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(255, 255, 255, 0.5)', zIndex: 9999 }}>
                         <CircularProgress style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} color="inherit" />
                     </div>
 
-                ) : (
+                )}
+
+                {!notFound && !isLoading && (
                     <div className="video-container" style={{ display: showBorder ? 'block' : 'none' }}>
                         <video ref={videoRef} className="video" autoPlay playsInline muted style={{
                             width: '100%', maxWidth: '420px', height: '320px', border: showBorder ? '10px solid #1A5662' : 'none',
@@ -102,6 +164,7 @@ const QRScanner = () => {
                         }}></video>
                     </div>
                 )}
+
 
                 <Button
                     onClick={showResetButton ? handleReset : handleScan}
@@ -121,6 +184,17 @@ const QRScanner = () => {
                 >
                     {showResetButton ? 'Reset' : 'Get Started'}
                 </Button>
+
+                <Snackbar
+                    open={openSnackbar}
+                    autoHideDuration={6000}
+                    onClose={handleCloseSnackbar}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                >
+                    <MuiAlert elevation={6} variant="filled" onClose={handleCloseSnackbar} severity="error">
+                        {message}. Please try again.
+                    </MuiAlert>
+                </Snackbar>
 
             </div>
         </main >

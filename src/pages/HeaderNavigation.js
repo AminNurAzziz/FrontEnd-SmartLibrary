@@ -9,7 +9,7 @@ const Header = () => {
     const color = '#0f1f40';
     return (
         <Navbar bg="light" expand="lg" style={{ boxShadow: `0px 4px 6px 0px ${alpha(color, 0.1)}` }}>
-            <Container style={{ height: ' 50px' }} fluid>
+            <Container style={{ height: ' 50px' }} >
                 <Navbar.Brand href="#">
                     <Image src={logo2} alt="Logo 2" style={{ width: '55px', height: 'auto', marginRight: '10px' }} />
                     <Image src={logo1} alt="Logo 1" style={{ width: '105px', height: 'auto' }} />
