@@ -37,17 +37,15 @@ const QRScanner = () => {
                     let responsePeminjaman = null;
                     let response = null;
                     let responseRegulation = null;
+                    let responseReservasi = null;
 
                     if (result.startsWith('KD-P')) {
-                        console.log('Peminjaman');
                         responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/KD-P1183614683p3v', {
                             method: 'GET',
                         });
 
                         if (responsePeminjaman.ok) {
                             const data = await responsePeminjaman.json();
-                            setBorrowedBooks(data);
-                            console.log('Data Peminjaman:', data);
 
                             setTimeout(() => {
                                 setIsLoading(false);
@@ -95,6 +93,29 @@ const QRScanner = () => {
                             setIsLoading(false);
                             setOpenSnackbar(true);
                         }
+                    } else if (result.startsWith('KD-R')) {
+                        responseReservasi = await fetch('http://127.0.0.1:8000/api/reservasi-buku/KD-R1183614683xXj', {
+                            method: 'GET',
+                        });
+
+                        if (responseReservasi.ok) {
+                            const data = await responseReservasi.json();
+                            setBorrowedBooks(data);
+
+                            setTimeout(() => {
+                                setIsLoading(false);
+                                navigate('/get-reserve', { state: { dataReservasi: data } });
+                            }, 1000); // Set the duration of loading here (in milliseconds)
+
+
+                        } else {
+                            setMessage('Data reserved books not found');
+                            setNotFound(true);
+                            setIsLoading(false);
+                            setOpenSnackbar(true);
+                            console.error('Error fetching student info:', responseReservasi.statusText);
+                        }
+
                     } else {
                         setMessage('Data not found');
                         setNotFound(true);
