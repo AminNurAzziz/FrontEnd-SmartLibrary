@@ -11,6 +11,9 @@ import ExtendReceiptPage from '../pages/ExtendReceiptPage';
 import ReserveReceiptPage from '../pages/ReserveReceiptPage';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
+import SidebarAdmin from '../pages/SideBarAdmin';
+import StudentPage from '../pages/StudentPage';
+import PeminjamanHistoryAdmin from '../pages/PeminjamanHistoryAdmin';
 
 const RoutesConfig = () => {
     return (
@@ -24,6 +27,10 @@ const RoutesConfig = () => {
             <Route path="/extend-receipt" element={<ExtendReceiptPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/admin" element={<SidebarAdmin />} />
+            <Route path="/manage-student" element={<StudentPage />} />
+            <Route path="/manage-borrowing" element={<PeminjamanHistoryAdmin />} />
+
 
         </Routes>
     );
