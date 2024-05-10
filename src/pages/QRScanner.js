@@ -40,7 +40,7 @@ const QRScanner = () => {
                     let responseReservasi = null;
 
                     if (result.startsWith('KD-P')) {
-                        responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/KD-P1183614683p3v', {
+                        responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/KD-P1183614683t4u', {
                             method: 'GET',
                         });
 
