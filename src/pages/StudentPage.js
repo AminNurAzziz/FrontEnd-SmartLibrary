@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Modal, Button, Form } from 'react-bootstrap';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
 import SidebarAdmin from './SideBarAdmin';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -8,27 +11,41 @@ const ReadStudentPage = () => {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterValue, setFilterValue] = useState('all');
+    const [showModal, setShowModal] = useState(false);
+    const [editStudent, setEditStudent] = useState({
+        nim: '',
+        nama_mhs: '',
+        prodi_mhs: '',
+        kelas_mhs: '',
+        email_mhs: '',
+        status_mhs: ''
+    });
+    const [snackbarOpen, setSnackbarOpen] = useState(false); // Tambahkan state untuk Snackbar
+    const [snackbarMessage, setSnackbarMessage] = useState(''); // Tambahkan state untuk pesan Snackbar
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false); // State untuk modal konfirmasi
+    const [deleteNim, setDeleteNim] = useState(''); // State untuk menyimpan NIM yang akan dihapus
+
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/api/allstudent');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data');
-                }
-                const data = await response.json();
-                setStudents(data.data);
-            } catch (error) {
-                setError('Failed to fetch data');
-            }
-        };
-
         fetchData();
     }, []);
 
-    const handleEdit = (borrowingCode) => {
-        // Logika untuk menangani edit
-        console.log("Edit:", borrowingCode);
+    const fetchData = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/allstudent');
+            if (!response.ok) {
+                throw new Error('Failed to fetch data');
+            }
+            const data = await response.json();
+            setStudents(data.data);
+        } catch (error) {
+            setError('Failed to fetch data');
+        }
+    };
+
+    const handleEdit = (student) => {
+        setEditStudent(student);
+        setShowModal(true);
     };
 
     const handleDelete = async (nim) => {
@@ -41,15 +58,53 @@ const ReadStudentPage = () => {
                 throw new Error('Failed to delete student');
             }
 
-            // Jika penghapusan berhasil, perbarui daftar siswa
             const updatedStudents = students.filter(student => student.nim !== nim);
             setStudents(updatedStudents);
+            setConfirmModalOpen(false);
+            setSnackbarMessage('Student successfully deleted'); // Set pesan Snackbar
+            setSnackbarOpen(true); // Buka Snackbar
         } catch (error) {
             console.error('Error deleting student:', error);
         }
     };
 
-    // Fungsi untuk memfilter siswa berdasarkan kata kunci pencarian dan nilai filter
+    const handleSave = async () => {
+        try {
+            const updatedData = {
+                nim: editStudent.nim,
+                name: editStudent.nama_mhs,
+                major: editStudent.prodi_mhs,
+                class: editStudent.kelas_mhs,
+                email: editStudent.email_mhs,
+                status: editStudent.status_mhs
+            };
+
+            const response = await fetch(`http://127.0.0.1:8000/api/update-student`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update student');
+            }
+
+            // Perbarui daftar mahasiswa setelah berhasil memperbarui data
+            const updatedStudents = students.map(student =>
+                student.nim === editStudent.nim ? { ...student, ...updatedData } : student
+            );
+            setStudents(updatedStudents);
+            fetchData();
+            setShowModal(false);
+            setSnackbarMessage('Data successfully updated'); // Set pesan Snackbar
+            setSnackbarOpen(true); // Buka Snackbar
+        } catch (error) {
+            console.error('Error updating student:', error);
+        }
+    };
+
     const filteredStudents = students.filter(student => {
         if (filterValue === 'all' || student.status_mhs === filterValue) {
             return student.nama_mhs.toLowerCase().includes(searchTerm.toLowerCase());
@@ -112,13 +167,8 @@ const ReadStudentPage = () => {
                                 </div>
                             </li>
                         </ul>
-
                     </nav>
                     <div className="container-fluid">
-                        <h1 className="h3 mb-2 text-gray-800">Tables</h1>
-                        <p className="mb-4">DataTables is a third party plugin that is used to generate the demo table below.
-                            For more information about DataTables, please visit the <a target="_blank"
-                                href="https://datatables.net">official DataTables documentation</a>.</p>
                         <div className="card shadow mb-4">
                             <div className="card-header py-3">
                                 <h6 className="m-0 font-weight-bold text-primary">Data Mahasiswa</h6>
@@ -147,13 +197,14 @@ const ReadStudentPage = () => {
                                                     <td>{student.email_mhs}</td>
                                                     <td>{student.status_mhs}</td>
                                                     <td>
-                                                        <button onClick={() => handleEdit(student.borrowing_code)} className="btn btn-primary">
+                                                        <button onClick={() => handleEdit(student)} className="btn btn-primary">
                                                             <EditIcon />
                                                         </button>
-                                                        <button onClick={() => handleDelete(student.nim)} className="btn btn-danger ml-2">
+                                                        <button onClick={() => { setDeleteNim(student.nim); setConfirmModalOpen(true); }} className="btn btn-danger ml-2">
                                                             <DeleteIcon />
                                                         </button>
                                                     </td>
+
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -164,6 +215,101 @@ const ReadStudentPage = () => {
                     </div>
                 </div>
             </div>
+            <Modal show={showModal} onHide={() => setShowModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Edit Student</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group controlId="formNim">
+                            <Form.Label>NIM</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={editStudent.nim}
+                                readOnly
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formNama">
+                            <Form.Label>Nama</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={editStudent.nama_mhs}
+                                onChange={(e) => setEditStudent({ ...editStudent, nama_mhs: e.target.value })}
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formProdi">
+                            <Form.Label>Program Studi</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={editStudent.prodi_mhs}
+                                onChange={(e) => setEditStudent({ ...editStudent, prodi_mhs: e.target.value })}
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formKelas">
+                            <Form.Label>Kelas</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={editStudent.kelas_mhs}
+                                onChange={(e) => setEditStudent({ ...editStudent, kelas_mhs: e.target.value })}
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formEmail">
+                            <Form.Label>Email</Form.Label>
+                            <Form.Control
+                                type="email"
+                                value={editStudent.email_mhs}
+                                onChange={(e) => setEditStudent({ ...editStudent, email_mhs: e.target.value })}
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="formStatus">
+                            <Form.Label>Status</Form.Label>
+                            <Form.Control
+                                as="select"
+                                value={editStudent.status_mhs}
+                                onChange={(e) => setEditStudent({ ...editStudent, status_mhs: e.target.value })}
+                            >
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </Form.Control>
+                        </Form.Group>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowModal(false)}>
+                        Close
+                    </Button>
+                    <Button variant="primary" onClick={handleSave}>
+                        Save Changes
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+            <Modal show={confirmModalOpen} onHide={() => setConfirmModalOpen(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirmation</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete this student?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setConfirmModalOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button variant="danger" onClick={() => handleDelete(deleteNim)}>
+                        Yes, Delete
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={2000}
+                onClose={() => setSnackbarOpen(false)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            // key={'top' + 'right'}
+            >
+                <MuiAlert elevation={6} variant="filled" onClose={() => setSnackbarOpen(false)} severity="success">
+                    {snackbarMessage}
+                </MuiAlert>
+            </Snackbar>
         </div>
     );
 };

@@ -10,11 +10,10 @@ const BookDetailModal = ({ open, onClose, bookData, onSelect }) => {
     const handleBorrow = () => {
         // Jika bookData adalah objek tunggal, kita langsung tambahkan ke dalam array baru
         const existingBooks = bookData ? [bookData] : [];
-        console.log("Existing books:", existingBooks);
         // Perbarui state dengan buku-buku yang sudah ada ditambah dengan buku baru
         onSelect(existingBooks);
         if (bookData && bookData.bookData) {
-            console.log("Pinjam button clicked for book:", bookData.bookData.book_title);
+            // console.log("Pinjam button clicked for book:", bookData.bookData.book_title);
         }
         // Lakukan sesuatu dengan buku yang dipinjam, misalnya tambahkan ke daftar buku yang dipinjam oleh pengguna
         onClose(); // Menutup modal setelah buku dipinjam
@@ -22,12 +21,18 @@ const BookDetailModal = ({ open, onClose, bookData, onSelect }) => {
 
 
     const handleReservation = () => {
-        // Tambahkan logika untuk reservasi buku di sini
-        console.log("Reservasi button clicked for book:", bookData.bookData.book_title);
+        // Jika bookData adalah objek tunggal, kita langsung tambahkan ke dalam array baru
+        const existingBooks = bookData ? [bookData] : [];
+        // Perbarui state dengan buku-buku yang sudah ada ditambah dengan buku baru
+        onSelect(existingBooks);
+        if (bookData && bookData.bookData) {
+        }
+        // Lakukan sesuatu dengan buku yang dipesan, misalnya tambahkan ke daftar buku yang dipesan oleh pengguna
+        onClose(); // Menutup modal setelah buku dipesan
     };
 
     useEffect(() => {
-        console.log("Book data chanssssssssged:", bookData);
+        // console.log("Book data chanssssssssged:", bookData);
     }, [bookData]);
 
     return (
@@ -75,12 +80,15 @@ const BookDetailModal = ({ open, onClose, bookData, onSelect }) => {
                             <Button
                                 variant="contained"
                                 onClick={handleReservation}
-                                disabled={bookData.stock === 17}
+                                disabled={bookData.stock > 0}
                                 sx={{ mr: 2 }}
                             >
                                 Reservasi
                             </Button>
-                            <Button variant="contained" onClick={handleBorrow}>
+                            <Button variant="contained" onClick={handleBorrow}
+
+                                disabled={bookData.stock === 0}
+                            >
                                 Pinjam
                             </Button>
                         </Box>
@@ -91,7 +99,7 @@ const BookDetailModal = ({ open, onClose, bookData, onSelect }) => {
                     </Typography>
                 )}
             </Box>
-        </Modal>
+        </Modal >
     );
 };
 

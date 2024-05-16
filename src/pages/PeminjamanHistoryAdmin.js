@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
+import { Modal, Button, Form, Pagination } from 'react-bootstrap'; // Import Pagination component
 import SidebarAdmin from './SideBarAdmin';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 function HistoryPeminjamanList() {
     const [historyPeminjaman, setHistoryPeminjaman] = useState([]);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterValue, setFilterValue] = useState('all');
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [deleteBorrowingCode, setDeleteBorrowingCode] = useState('');
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(5); // Items per page
 
     useEffect(() => {
         fetchHistoryPeminjaman();
@@ -25,23 +35,58 @@ function HistoryPeminjamanList() {
         }
     };
 
+    const handleDeleteConfirmed = async () => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/api/history-peminjaman/${deleteBorrowingCode}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete borrowing record');
+            }
+
+            // Remove the row with the corresponding borrowing code from the state
+            const updatedHistoryPeminjaman = historyPeminjaman.filter(row => row.borrowing_code !== deleteBorrowingCode);
+            setHistoryPeminjaman(updatedHistoryPeminjaman);
+
+            // Close the confirmation modal
+            setConfirmModalOpen(false);
+
+            // Set Snackbar state
+            setSnackbarMessage('Borrowing record successfully deleted');
+            setSnackbarOpen(true);
+        } catch (error) {
+            console.error('Error deleting borrowing record:', error);
+        }
+    };
+
     const handleEdit = (borrowingCode) => {
-        // Logika untuk menangani edit
+        // Logic to handle edit
         console.log("Edit:", borrowingCode);
     };
 
     const handleDelete = (borrowingCode) => {
-        // Logika untuk menangani delete
         console.log("Delete:", borrowingCode);
+        setDeleteBorrowingCode(borrowingCode);
+        setConfirmModalOpen(true);
     };
 
-    // Fungsi untuk memfilter riwayat peminjaman berdasarkan kata kunci pencarian dan nilai filter
+    // Function to filter borrowing history based on search term and filter value
     const filteredHistoryPeminjaman = historyPeminjaman.filter((row) => {
         if (filterValue === 'all' || row.status === filterValue) {
             return row.nim.toLowerCase().includes(searchTerm.toLowerCase());
         }
         return false;
     });
+
+    // Logic for pagination
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredHistoryPeminjaman.slice(indexOfFirstItem, indexOfLastItem);
+
+    // Change page
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
 
     return (
         <div id="wrapper">
@@ -103,10 +148,8 @@ function HistoryPeminjamanList() {
 
                     </nav>
                     <div className="container-fluid">
-                        <h1 className="h3 mb-2 text-gray-800">Tables</h1>
-                        <p className="mb-4">DataTables is a third party plugin that is used to generate the demo table below.
-                            For more information about DataTables, please visit the <a target="_blank"
-                                href="https://datatables.net">official DataTables documentation</a>.</p>
+                        {/* <h1 className="h3 mb-2 text-gray-800">Tables</h1> */}
+                        {/* <p className="mb-4">Borrowing Datas </p> */}
                         <div className="card shadow mb-4">
                             <div className="card-header py-3">
                                 <h6 className="m-0 font-weight-bold text-primary">Data Peminjaman</h6>
@@ -126,7 +169,7 @@ function HistoryPeminjamanList() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredHistoryPeminjaman.map((row, index) => (
+                                            {currentItems.map((row, index) => (
                                                 <tr key={index}>
                                                     <td>{row.nim}</td>
                                                     <td>{row.book_title}</td>
@@ -135,21 +178,80 @@ function HistoryPeminjamanList() {
                                                     <td>{row.return_date}</td>
                                                     <td>{row.status}</td>
                                                     <td>
-                                                        <button onClick={() => handleEdit(row.borrowing_code)} className="btn btn-primary">
-                                                            Edit
-                                                        </button>
+                                                        {/* <button onClick={() => handleEdit(row.borrowing_code)} className="btn btn-primary">
+                    Edit
+                </button> */}
                                                         <button onClick={() => handleDelete(row.borrowing_code)} className="btn btn-danger ml-2">
-                                                            Delete
+                                                            <DeleteIcon />
                                                         </button>
                                                     </td>
                                                 </tr>
                                             ))}
                                         </tbody>
+
                                     </table>
                                 </div>
                             </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+                                <Pagination>
+                                    <Pagination.First onClick={() => paginate(1)} />
+                                    <Pagination.Prev onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} />
+                                    {/* Render a subset of page numbers */}
+                                    {Array.from({ length: Math.min(5, Math.ceil(filteredHistoryPeminjaman.length / itemsPerPage)) }).map((_, index) => {
+                                        const page = index + 1;
+                                        // Adjust current page number to display based on the position of the current page
+                                        let displayPage;
+                                        if (currentPage <= 3) {
+                                            displayPage = page;
+                                        } else if (currentPage >= Math.ceil(filteredHistoryPeminjaman.length / itemsPerPage) - 2) {
+                                            displayPage = Math.ceil(filteredHistoryPeminjaman.length / itemsPerPage) - 4 + page;
+                                        } else {
+                                            displayPage = currentPage - 2 + page;
+                                        }
+                                        return (
+                                            <Pagination.Item
+                                                key={displayPage}
+                                                onClick={() => paginate(displayPage)}
+                                                active={displayPage === currentPage}
+                                            >
+                                                {displayPage}
+                                            </Pagination.Item>
+                                        );
+                                    })}
+                                    <Pagination.Next onClick={() => paginate(currentPage + 1)} disabled={currentPage === Math.ceil(filteredHistoryPeminjaman.length / itemsPerPage)} />
+                                    <Pagination.Last onClick={() => paginate(Math.ceil(filteredHistoryPeminjaman.length / itemsPerPage))} />
+                                </Pagination>
+                            </div>
+
                         </div>
                     </div>
+                    <Modal show={confirmModalOpen} onHide={() => setConfirmModalOpen(false)}>
+                        <Modal.Header closeButton>
+                            <Modal.Title>Confirmation</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            Are you sure you want to delete this borrowing record?
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={() => setConfirmModalOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button variant="danger" onClick={() => handleDeleteConfirmed()}>
+                                Yes, Delete
+                            </Button>
+                        </Modal.Footer>
+                    </Modal>
+                    <Snackbar
+                        open={snackbarOpen}
+                        autoHideDuration={3000}
+                        onClose={() => setSnackbarOpen(false)}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    >
+                        <MuiAlert elevation={6} variant="filled" onClose={() => setSnackbarOpen(false)} severity="success">
+                            {snackbarMessage}
+                        </MuiAlert>
+                    </Snackbar>
+
                 </div>
             </div>
         </div>

@@ -33,13 +33,13 @@ const SearchBookModal = ({ open, onClose, onSearch, notFound }) => {
                 isbn: book.bookData.isbn,
                 book_code: book.bookData.book_code,
                 book_title: book.bookData.book_title,
+                stock: book.bookData.stock,
                 publisher: book.bookData.publisher,
                 borrow_date: new Date().toISOString().split('T')[0],
                 return_date: new Date(Date.now() + book.regulationData.max_loan_days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                max_loan_days: book.regulationData.max_loan_days
+                max_loan_days: book.regulationData.max_loan_days,
+                action: book.bookData.stock > 0 ? 'Borrow' : 'Reserve'
             }));
-
-            console.log('Found books:', formattedBooks);
             onSearch(formattedBooks);
             handleClose();
         } catch (error) {

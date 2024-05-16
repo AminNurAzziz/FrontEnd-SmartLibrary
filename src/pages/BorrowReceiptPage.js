@@ -17,6 +17,8 @@ const BorrowReceiptPage = () => {
         return <Typography variant="h4">Data peminjaman tidak tersedia.</Typography>;
     }
 
+    console.log(receiptData);
+
     const handleEmailChange = (e) => {
         setEmail(e.target.value);
     };
