@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Container, Typography, TextField, Button, Grid, Paper, styled, Snackbar } from '@mui/material';
 import backgroundImage from '../assets/logo/background.jpg';
 import MuiAlert from '@mui/material/Alert';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
 const MainContainer = styled('div')({
     backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.5)), url(${backgroundImage})`, // Use the imported image in the background
     backgroundSize: 'cover',
@@ -12,20 +15,38 @@ const MainContainer = styled('div')({
     justifyContent: 'center',
     alignItems: 'center',
 });
+
 const AdminLoginPage = () => {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState(''); // Change username to email
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [openSnackbar, setOpenSnackbar] = useState(false);
+    const navigate = useNavigate(); // Initialize useNavigate
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Logika autentikasi di sini (contoh sederhana hanya untuk demonstrasi)
-        if (username === 'admin' && password === 'admin123') {
-            // Autentikasi berhasil
-            console.log('Login Success');
-            // Redirect ke halaman admin
-        } else {
+        try {
+            const response = await axios.post('http://127.0.0.1:8000/api/auth/login', {
+                email, // Change username to email
+                password
+            });
+            const { access_token, user_role } = response.data;
+
+
+            localStorage.setItem('role', user_role);
+            localStorage.setItem('isFirstLogin', true);
+
+            if (user_role === 'admin' || user_role === 'superAdmin') {
+                // Save token to local storage or context
+                localStorage.setItem('token', access_token);
+                // Redirect to admin page
+                navigate('/dashboard');
+            } else {
+                setError('Unauthorized role');
+                setOpenSnackbar(true);
+            }
+        } catch (error) {
+            setError('Email or password is incorrect');
             setOpenSnackbar(true);
         }
     };
@@ -37,7 +58,6 @@ const AdminLoginPage = () => {
     return (
         <MainContainer>
             <Container maxWidth="xs" align="center">
-
                 <Snackbar
                     open={openSnackbar}
                     autoHideDuration={6000}
@@ -45,7 +65,7 @@ const AdminLoginPage = () => {
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
                 >
                     <MuiAlert elevation={6} variant="filled" onClose={handleCloseSnackbar} severity="error">
-                        Username or password is incorrect
+                        Email or password is incorrect
                     </MuiAlert>
                 </Snackbar>
                 <Paper elevation={3} sx={{ padding: 4, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
@@ -59,11 +79,11 @@ const AdminLoginPage = () => {
                         <TextField
                             fullWidth
                             margin="normal"
-                            id="username"
-                            label="Username"
+                            id="email" // Change id to email
+                            label="Email" // Change label to Email
                             variant="outlined"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            value={email} // Change value to email
+                            onChange={(e) => setEmail(e.target.value)} // Change setUsername to setEmail
                         />
                         <TextField
                             fullWidth
@@ -89,7 +109,7 @@ const AdminLoginPage = () => {
                         </Grid>
                     </form>
                 </Paper>
-            </Container >
+            </Container>
         </MainContainer>
     );
 };

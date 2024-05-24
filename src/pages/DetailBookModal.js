@@ -13,7 +13,7 @@ const BookDetailModal = ({ open, onClose, bookData, onSelect }) => {
         // Perbarui state dengan buku-buku yang sudah ada ditambah dengan buku baru
         onSelect(existingBooks);
         if (bookData && bookData.bookData) {
-            // console.log("Pinjam button clicked for book:", bookData.bookData.book_title);
+            console.log("Pinjam button clicked for book:", bookData.bookData.book_title);
         }
         // Lakukan sesuatu dengan buku yang dipinjam, misalnya tambahkan ke daftar buku yang dipinjam oleh pengguna
         onClose(); // Menutup modal setelah buku dipinjam

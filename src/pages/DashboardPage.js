@@ -1,8 +1,42 @@
 import React, { useState } from 'react';
 import SidebarAdmin from './SideBarAdmin';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie } from 'recharts';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Navbar from './Navbar'; // Import the Navbar component
 
 const DashboardPage = () => {
+    const [openSnackbar, setOpenSnackbar] = useState(false);
+    const navigate = useNavigate();
+
+
+    useEffect(() => {
+        // Check if token exists in local storage
+        const token = localStorage.getItem('token');
+        if (!token && !localStorage.getItem('role')) {
+            // Redirect to login page
+            navigate('/login');
+        }
+        const isFirst = localStorage.getItem('isFirstLogin');
+        if (isFirst === 'true') {
+            console.log('First login' + isFirst);
+            // Jika pengguna baru saja login, maka tampilkan snackbar
+            handleLoginSuccess();
+            // Set isFirstLogin menjadi false agar snackbar tidak muncul lagi di masa mendatang
+            localStorage.setItem('isFirstLogin', 'false');
+        }
+    }, []);
+
+    const handleSnackbarClose = () => {
+        setOpenSnackbar(false);
+    };
+
+    const handleLoginSuccess = () => {
+        setOpenSnackbar(true);
+    };
+
     // Data dashboard
     const dashboardData = {
         total_student_borrow: 200,
@@ -39,40 +73,18 @@ const DashboardPage = () => {
             <SidebarAdmin />
             <div id="content-wrapper" className="d-flex flex-column">
                 <div id="content">
-                    <nav className="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-                        <h1 className="h4 mb-0 text-gray-800">Dashboard</h1>
-                        <ul className="navbar-nav ml-auto">
-                            <li className="nav-item dropdown no-arrow">
-                                <button className="nav-link dropdown-toggle" id="userDropdown" role="button" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false">
-                                    <span className="mr-2 d-none d-lg-inline text-gray-600 small">Admin</span>
-                                    <img className="img-profile rounded-circle" src="https://source.unsplash.com/QAB-WJcbgJk/60x60" alt="profile" />
-                                </button>
-                                <div className="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                    aria-labelledby="userDropdown">
-                                    <button className="dropdown-item" href="#">
-                                        <i className="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Profile
-                                    </button>
-                                    <button className="dropdown-item" href="#">
-                                        <i className="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Settings
-                                    </button>
-                                    <button className="dropdown-item" href="#">
-                                        <i className="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Activity Log
-                                    </button>
-                                    <div className="dropdown-divider"></div>
-                                    <button className="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
-                                        <i className="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Logout
-                                    </button>
-                                </div>
-                            </li>
-                        </ul>
-
-                    </nav>
+                    <Navbar setSearchTerm={() => { }} />
                     <div className="container-fluid">
+                        <Snackbar
+                            open={openSnackbar}
+                            autoHideDuration={6000}
+                            onClose={handleSnackbarClose}
+                            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        >
+                            <MuiAlert onClose={handleSnackbarClose} severity="success" elevation={6} variant="filled">
+                                Successfully logged in!
+                            </MuiAlert>
+                        </Snackbar>
                         <div className="row">
                             <div className="col-xl-3 col-md-6 mb-4">
                                 <div className="card border-left-primary shadow h-100 py-2">

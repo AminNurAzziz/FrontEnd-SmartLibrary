@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import SearchBookModal from './SearchBookModal';
 import BookDetailModal from './DetailBookModal';
 import QRScannerModal from './QRScannerModal';
+import { extend } from 'jquery';
 
 const StudentInfo = () => {
     const location = useLocation();
@@ -25,6 +26,13 @@ const StudentInfo = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
 
+    const handleExtendBookThePass = (bookId) => {
+        // Lakukan logika perpanjangan buku di sini
+        console.log("Perpanjang buku dengan ID:", bookId);
+        // Kemudian arahkan pengguna kembali ke halaman utama
+        navigate('/');
+    };
+
     const handleSearch = (searchTerm) => {
         setSelectedBook(searchTerm);
         setIsDetailBookModalOpen(true);
@@ -32,7 +40,7 @@ const StudentInfo = () => {
     };
 
     const handleSelectBook = (bookData) => {
-        if (borrowedBooks.length === 2) {
+        if (borrowedBooks.length >= regulationData.max_borrowed_books) {
             handleNotFound();
             setSnackbarMessage('You have reached the maximum limit of borrowed books');
         } else {
@@ -59,6 +67,7 @@ const StudentInfo = () => {
     const handleModalClose = () => {
         setIsQRModalOpen(false);
     };
+
 
     // const handleBorrowBooks = () => {
     //     setLoading(true);
@@ -99,17 +108,17 @@ const StudentInfo = () => {
 
         const reserveBooks = searchResults.filter(book => book.action === 'Reserve');
         const borrowBooks = searchResults.filter(book => book.action === 'Borrow');
-
+        console.log('Cek reserveBooks:', searchResults);
         const requests = [];
 
         if (reserveBooks.length > 0) {
-            const reservationData = reserveBooks.map((book) => ({ book_code: book.book_code }));
+            const reservationData = reserveBooks.map((book) => ({ book_code: book.book_code, max_reserve_days: regulationData.max_reserve_days }));
             requests.push(
                 fetch('http://127.0.0.1:8000/api/reservasi-buku', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'nim': '2141762034' // Tambahkan header nim
+                        'nim': studentData.nim // Tambahkan header nim
                     },
                     body: JSON.stringify({
                         book_reservation: reservationData
@@ -139,10 +148,10 @@ const StudentInfo = () => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'nim': '2141762034' // Tambahkan header nim
+                        'nim': studentData.nim // Tambahkan header nim
                     },
                     body: JSON.stringify({
-                        buku_pinjam: borrowBooks.map((book) => ({ kode_buku: book.book_code })) // Ambil kode buku dari borrowBooks
+                        buku_pinjam: borrowBooks.map((book) => ({ kode_buku: book.book_code, extended: book.extended || false, max_loan_days: regulationData.max_loan_days })) // Ambil kode buku dari searchResults
                     })
                 }).then(response => response.json())
                     .catch(error => {
@@ -217,6 +226,8 @@ const StudentInfo = () => {
             })
         );
     };
+
+
 
     useEffect(() => {
         if (!login || !location.state) {
@@ -338,7 +349,7 @@ const StudentInfo = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {borrowedBooks.map((book, index) => renderBorrowedBook(book, index, regulationData))}
+                                {borrowedBooks.map((book, index) => renderBorrowedBook(book, index, regulationData, handleExtendBookThePass))}
 
                             </TableBody>
                             <TableBody>
@@ -383,7 +394,7 @@ const StudentInfo = () => {
     );
 };
 
-const renderBorrowedBook = (book, index, regulationData) => {
+const renderBorrowedBook = (book, index, regulationData, handleExtendBookThePass) => {
     const borrowDate = new Date(book.borrow_date);
     const returnDate = new Date(book.return_date);
     const max_loan_days = regulationData.max_loan_days;
@@ -411,7 +422,7 @@ const renderBorrowedBook = (book, index, regulationData) => {
                     variant="contained"
                     color="primary"
                     disabled={isExtendDisabled}
-                    onClick={() => console.log("Extend button clicked for book:", book.book_title)}
+                    onClick={() => handleExtendBookThePass(book.borrow_id)}
                 >
                     Extend
                 </Button>
@@ -441,7 +452,7 @@ const renderSearchBook = (bookDatas, index, handleRemoveBook, handleExtendBook) 
                     variant="contained"
                     color="primary"
                     onClick={() => handleExtendBook(bookDatas.id)}
-                    disabled={bookDatas.extended} // Disable tombol jika buku sudah diperpanjang
+                    disabled={bookDatas.action === 'Reserve'}
                 >
                     Extend
                 </Button>

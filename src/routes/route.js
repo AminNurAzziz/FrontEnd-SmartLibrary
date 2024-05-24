@@ -14,6 +14,7 @@ import DashboardPage from '../pages/DashboardPage';
 import SidebarAdmin from '../pages/SideBarAdmin';
 import StudentPage from '../pages/StudentPage';
 import PeminjamanHistoryAdmin from '../pages/PeminjamanHistoryAdmin';
+import RegulationPage from '../pages/RegulationPage';
 
 const RoutesConfig = () => {
     return (
@@ -30,7 +31,7 @@ const RoutesConfig = () => {
             <Route path="/admin" element={<SidebarAdmin />} />
             <Route path="/manage-student" element={<StudentPage />} />
             <Route path="/manage-borrowing" element={<PeminjamanHistoryAdmin />} />
-
+            <Route path="/regulation" element={<RegulationPage />} />
 
         </Routes>
     );

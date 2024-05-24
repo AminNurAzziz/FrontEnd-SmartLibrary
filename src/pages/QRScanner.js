@@ -40,7 +40,7 @@ const QRScanner = () => {
                     let responseReservasi = null;
 
                     if (result.startsWith('KD-P')) {
-                        responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/KD-P1183614683t4u', {
+                        responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/{scanResult}', {
                             method: 'GET',
                         });
 
@@ -94,7 +94,7 @@ const QRScanner = () => {
                             setOpenSnackbar(true);
                         }
                     } else if (result.startsWith('KD-R')) {
-                        responseReservasi = await fetch('http://127.0.0.1:8000/api/reservasi-buku/KD-R1183614683gBn', {
+                        responseReservasi = await fetch('http://127.0.0.1:8000/api/reservasi-buku/{scanResult}', {
                             method: 'GET',
                         });
 

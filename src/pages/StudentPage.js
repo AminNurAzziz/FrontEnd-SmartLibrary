@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form } from 'react-bootstrap';
+import { Modal, Button, Form, } from 'react-bootstrap';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import SidebarAdmin from './SideBarAdmin';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useNavigate } from 'react-router-dom';
+import Navbar from './Navbar';
 
 const ReadStudentPage = () => {
     const [students, setStudents] = useState([]);
@@ -20,13 +22,24 @@ const ReadStudentPage = () => {
         email_mhs: '',
         status_mhs: ''
     });
-    const [snackbarOpen, setSnackbarOpen] = useState(false); // Tambahkan state untuk Snackbar
-    const [snackbarMessage, setSnackbarMessage] = useState(''); // Tambahkan state untuk pesan Snackbar
-    const [confirmModalOpen, setConfirmModalOpen] = useState(false); // State untuk modal konfirmasi
-    const [deleteNim, setDeleteNim] = useState(''); // State untuk menyimpan NIM yang akan dihapus
-
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+    const [deleteNim, setDeleteNim] = useState('');
+    const navigate = useNavigate();
+    const [sortColumn, setSortColumn] = useState('');
+    const [sortOrder, setSortOrder] = useState('asc');
 
     useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token && !localStorage.getItem('role')) {
+            navigate('/login');
+        }
+        const isFirst = localStorage.getItem('isFirstLogin');
+        if (isFirst === 'true') {
+            console.log('First login' + isFirst);
+            localStorage.setItem('isFirstLogin', 'false');
+        }
         fetchData();
     }, []);
 
@@ -53,16 +66,14 @@ const ReadStudentPage = () => {
             const response = await fetch(`http://127.0.0.1:8000/api/delete-student/${nim}`, {
                 method: 'DELETE'
             });
-
             if (!response.ok) {
                 throw new Error('Failed to delete student');
             }
-
             const updatedStudents = students.filter(student => student.nim !== nim);
             setStudents(updatedStudents);
             setConfirmModalOpen(false);
-            setSnackbarMessage('Student successfully deleted'); // Set pesan Snackbar
-            setSnackbarOpen(true); // Buka Snackbar
+            setSnackbarMessage('Student successfully deleted');
+            setSnackbarOpen(true);
         } catch (error) {
             console.error('Error deleting student:', error);
         }
@@ -78,7 +89,6 @@ const ReadStudentPage = () => {
                 email: editStudent.email_mhs,
                 status: editStudent.status_mhs
             };
-
             const response = await fetch(`http://127.0.0.1:8000/api/update-student`, {
                 method: 'PATCH',
                 headers: {
@@ -86,23 +96,47 @@ const ReadStudentPage = () => {
                 },
                 body: JSON.stringify(updatedData),
             });
-
             if (!response.ok) {
                 throw new Error('Failed to update student');
             }
-
-            // Perbarui daftar mahasiswa setelah berhasil memperbarui data
             const updatedStudents = students.map(student =>
                 student.nim === editStudent.nim ? { ...student, ...updatedData } : student
             );
             setStudents(updatedStudents);
             fetchData();
             setShowModal(false);
-            setSnackbarMessage('Data successfully updated'); // Set pesan Snackbar
-            setSnackbarOpen(true); // Buka Snackbar
+            setSnackbarMessage('Data successfully updated');
+            setSnackbarOpen(true);
         } catch (error) {
             console.error('Error updating student:', error);
         }
+    };
+
+    const handleSort = (key) => {
+        if (key === sortColumn) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortColumn(key);
+            setSortOrder('asc');
+        }
+    };
+
+    const sortData = (data) => {
+        if (sortColumn) {
+            const sorted = data.sort((a, b) => {
+                const valueA = a[sortColumn].toLowerCase();
+                const valueB = b[sortColumn].toLowerCase();
+                if (valueA < valueB) {
+                    return sortOrder === 'asc' ? -1 : 1;
+                }
+                if (valueA > valueB) {
+                    return sortOrder === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+            return sorted;
+        }
+        return data;
     };
 
     const filteredStudents = students.filter(student => {
@@ -112,62 +146,14 @@ const ReadStudentPage = () => {
         return false;
     });
 
+    const sortedStudents = sortData(filteredStudents);
+
     return (
         <div id="wrapper">
             <SidebarAdmin />
             <div id="content-wrapper" className="d-flex flex-column">
                 <div id="content">
-                    <nav className="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-                        <button id="sidebarToggleTop" className="btn btn-link d-md-none rounded-circle mr-3">
-                            <i className="fa fa-bars"></i>
-                        </button>
-                        <form className="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
-                            <div className="input-group">
-                                <input
-                                    className="form-control bg-light border-0 small"
-                                    placeholder="Search for..."
-                                    aria-label="Search"
-                                    aria-describedby="basic-addon2"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                                <div className="input-group-append">
-                                    <button className="btn btn-primary" type="button">
-                                        <i className="fas fa-search fa-sm"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                        <ul className="navbar-nav ml-auto">
-                            <li className="nav-item dropdown no-arrow">
-                                <button className="nav-link dropdown-toggle" id="userDropdown" role="button" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false">
-                                    <span className="mr-2 d-none d-lg-inline text-gray-600 small">Admin</span>
-                                    <img className="img-profile rounded-circle" src="https://source.unsplash.com/QAB-WJcbgJk/60x60" alt="profile" />
-                                </button>
-                                <div className="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                    aria-labelledby="userDropdown">
-                                    <button className="dropdown-item" href="#">
-                                        <i className="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Profile
-                                    </button>
-                                    <button className="dropdown-item" href="#">
-                                        <i className="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Settings
-                                    </button>
-                                    <button className="dropdown-item" href="#">
-                                        <i className="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Activity Log
-                                    </button>
-                                    <div className="dropdown-divider"></div>
-                                    <button className="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
-                                        <i className="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Logout
-                                    </button>
-                                </div>
-                            </li>
-                        </ul>
-                    </nav>
+                    <Navbar setSearchTerm={setSearchTerm} />
                     <div className="container-fluid">
                         <div className="card shadow mb-4">
                             <div className="card-header py-3">
@@ -178,17 +164,47 @@ const ReadStudentPage = () => {
                                     <table className="table table-bordered" id="dataTable" width="100%" cellSpacing="0">
                                         <thead>
                                             <tr>
-                                                <th>NIM</th>
-                                                <th>Nama</th>
-                                                <th>Program Studi</th>
-                                                <th>Kelas</th>
-                                                <th>Email</th>
-                                                <th>Status</th>
+                                                <th onClick={() => handleSort('nim')} style={{ cursor: 'pointer' }}>
+                                                    NIM
+                                                    {sortColumn === 'nim' && (
+                                                        <span>{sortOrder === 'asc' ? ' ↑' : ' ↓'}</span>
+                                                    )}
+                                                </th>
+                                                <th onClick={() => handleSort('nama_mhs')} style={{ cursor: 'pointer' }}>
+                                                    Nama
+                                                    {sortColumn === 'nama_mhs' && (
+                                                        <span>{sortOrder === 'asc' ? ' ↑' : ' ↓'}</span>
+                                                    )}
+                                                </th>
+                                                <th onClick={() => handleSort('prodi_mhs')} style={{ cursor: 'pointer' }}>
+                                                    Program Studi
+                                                    {sortColumn === 'prodi_mhs' && (
+                                                        <span>{sortOrder === 'asc' ? ' ↑' : ' ↓'}</span>
+                                                    )}
+                                                </th>
+                                                <th onClick={() => handleSort('kelas_mhs')} style={{ cursor: 'pointer' }}>
+                                                    Kelas
+                                                    {sortColumn === 'kelas_mhs' && (
+                                                        <span>{sortOrder === 'asc' ? ' ↑' : ' ↓'}</span>
+                                                    )}
+                                                </th>
+                                                <th onClick={() => handleSort('email_mhs')} style={{ cursor: 'pointer' }}>
+                                                    Email
+                                                    {sortColumn === 'email_mhs' && (
+                                                        <span>{sortOrder === 'asc' ? ' ↑' : ' ↓'}</span>
+                                                    )}
+                                                </th>
+                                                <th onClick={() => handleSort('status_mhs')} style={{ cursor: 'pointer' }}>
+                                                    Status
+                                                    {sortColumn === 'status_mhs' && (
+                                                        <span>{sortOrder === 'asc' ? ' ↑' : ' ↓'}</span>
+                                                    )}
+                                                </th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {filteredStudents.map((student, index) => (
+                                            {sortedStudents.map((student, index) => (
                                                 <tr key={student.id} style={{ cursor: 'pointer', backgroundColor: student.status_mhs === 'active' ? '#e0f2f1' : '#ffebee' }}>
                                                     <td>{student.nim}</td>
                                                     <td>{student.nama_mhs}</td>
@@ -204,7 +220,6 @@ const ReadStudentPage = () => {
                                                             <DeleteIcon />
                                                         </button>
                                                     </td>
-
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -229,24 +244,24 @@ const ReadStudentPage = () => {
                                 readOnly
                             />
                         </Form.Group>
-                        <Form.Group controlId="formNama">
-                            <Form.Label>Nama</Form.Label>
+                        <Form.Group controlId="formName">
+                            <Form.Label>Name</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={editStudent.nama_mhs}
                                 onChange={(e) => setEditStudent({ ...editStudent, nama_mhs: e.target.value })}
                             />
                         </Form.Group>
-                        <Form.Group controlId="formProdi">
-                            <Form.Label>Program Studi</Form.Label>
+                        <Form.Group controlId="formMajor">
+                            <Form.Label>Major</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={editStudent.prodi_mhs}
                                 onChange={(e) => setEditStudent({ ...editStudent, prodi_mhs: e.target.value })}
                             />
                         </Form.Group>
-                        <Form.Group controlId="formKelas">
-                            <Form.Label>Kelas</Form.Label>
+                        <Form.Group controlId="formClass">
+                            <Form.Label>Class</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={editStudent.kelas_mhs}
@@ -272,6 +287,7 @@ const ReadStudentPage = () => {
                                 <option value="inactive">Inactive</option>
                             </Form.Control>
                         </Form.Group>
+
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
@@ -304,7 +320,6 @@ const ReadStudentPage = () => {
                 autoHideDuration={2000}
                 onClose={() => setSnackbarOpen(false)}
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            // key={'top' + 'right'}
             >
                 <MuiAlert elevation={6} variant="filled" onClose={() => setSnackbarOpen(false)} severity="success">
                     {snackbarMessage}
