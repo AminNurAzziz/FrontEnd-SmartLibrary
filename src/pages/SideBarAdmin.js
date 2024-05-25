@@ -52,13 +52,13 @@ const SidebarAdmin = () => {
                     <hr className="sidebar-divider" />
                     <div className="sidebar-heading">Transactions</div>
                     <li className="nav-item">
-                        <button className="nav-link" onClick={() => handleOnClicked('/student')} >
+                        <button className="nav-link" onClick={() => handleOnClicked('/')} >
                             <i className="fas fa-fw fa-reply"></i>
                             <span>Returns</span>
                         </button>
                     </li>
                     <li className="nav-item">
-                        <button className="nav-link" onClick={() => handleOnClicked('/student')}>
+                        <button className="nav-link" onClick={() => handleOnClicked('/')}>
                             <i className="fas fa-fw fa-book"></i>
                             <span>Borrowing</span>
                         </button>

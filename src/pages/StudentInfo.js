@@ -307,7 +307,7 @@ const StudentInfo = () => {
                                 <Card>
                                     <CardContent sx={{ backgroundColor: '#ffdac1' }}>
                                         {/* <Typography variant="h6"> {studentData.class}</Typography> */}
-                                        <Typography variant="h6">2141762034</Typography>
+                                        <Typography variant="h6"><b>{studentData.nim}</b></Typography>
                                         <Typography variant="h6"><b>NIM</b></Typography>
 
                                     </CardContent>
@@ -317,7 +317,7 @@ const StudentInfo = () => {
                             <Grid item>
                                 <Card>
                                     <CardContent sx={{ backgroundColor: '#faf5e6' }}>
-                                        <Typography variant="h6">Teknologi Informasi</Typography>
+                                        <Typography variant="h6">{studentData.major}</Typography>
                                         <Typography variant="h6"><b>Major</b></Typography>
                                     </CardContent>
                                 </Card>
@@ -326,7 +326,7 @@ const StudentInfo = () => {
                             <Grid item>
                                 <Card>
                                     <CardContent sx={{ backgroundColor: '#e6f8fa' }}>
-                                        <Typography variant="h6">SIB-3B</Typography>
+                                        <Typography variant="h6">{studentData.class}</Typography>
                                         <Typography variant="h6"><b>Class</b></Typography>
                                     </CardContent>
                                 </Card>
@@ -334,7 +334,7 @@ const StudentInfo = () => {
                         </Grid>
                     </Grid>
                 </Grid>
-                {borrowedBooks && borrowedBooks.length > 0 && (
+                {borrowedBooks && borrowedBooks.length >= 0 && (
                     <TableContainer sx={{ mt: 4 }}>
                         <Typography variant="h5" gutterBottom align="center" sx={{ color: '#0f1f40', mb: 2 }}>Borrowed Books</Typography>
                         <Table sx={{ backgroundColor: '#ffffff', border: '2px solid #e6f2ff', borderRadius: '40px' }}>

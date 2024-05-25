@@ -29,8 +29,9 @@ const QRScanner = () => {
             setShowBorder(true); // Show the border when scanning starts
 
             const scanner = new QrScanner(videoRef.current, async (result) => {
-                setIsLoading(true); // Set loading state to true when fetching data
                 setScanResult(result);
+                setIsLoading(true); // Set loading state to true when fetching data
+
                 try {
                     const headers = new Headers();
                     headers.append('NIM', result);
@@ -40,7 +41,8 @@ const QRScanner = () => {
                     let responseReservasi = null;
 
                     if (result.startsWith('KD-P')) {
-                        responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/{scanResult}', {
+                        console.log('masuk pengembalian' + scanResult);
+                        responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/' + result, {
                             method: 'GET',
                         });
 
@@ -94,9 +96,12 @@ const QRScanner = () => {
                             setOpenSnackbar(true);
                         }
                     } else if (result.startsWith('KD-R')) {
-                        responseReservasi = await fetch('http://127.0.0.1:8000/api/reservasi-buku/{scanResult}', {
+                        console.log('masuk reservasi' + scanResult);
+                        responseReservasi = await fetch('http://127.0.0.1:8000/api/reservasi-buku/' + result, {
                             method: 'GET',
                         });
+
+                        console.log(responseReservasi);
 
                         if (responseReservasi.ok) {
                             const data = await responseReservasi.json();

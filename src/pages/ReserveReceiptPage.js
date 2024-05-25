@@ -33,26 +33,36 @@ const ReturnPage = () => {
 
 
     const handleConfirmButtonClick = async () => {
-        console.log('Confirming the reservation' + reserveData.reservation_code);
+        console.log('Confirming the reservation: ' + reserveData.reservation_code);
         try {
             setIsLoading(true);
+
             const response = await fetch(`http://127.0.0.1:8000/api/konfirmasi-reservasi/${reserveData.reservation_code}`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json'
-                }
+                    'Content-Type': 'application/json',
+                },
             });
-            if (response.ok) {
-                const data = await response.json();
-                setIsLoading(false);
-                navigate('/borrow-confirmation', { replace: true, state: { message: 'Reserve Comfirmation' } });
-            } else {
-                console.error('Failed to confirm the reservation' + response.statusText);
+
+            console.log(response);
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                console.error('Failed to confirm the reservation: ' + response.statusText, errorData);
+                throw new Error(`Server responded with status: ${response.status}`);
             }
+
+            const data = await response.json();
+            console.log('Reservation confirmed:', data);
+
+            navigate('/borrow-confirmation', { replace: true, state: { message: 'Reserve Confirmation' } });
         } catch (error) {
-            console.error('Error extending the book:', error);
+            console.error('Error confirming the reservation:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
+
 
 
 
@@ -176,7 +186,9 @@ const ReturnPage = () => {
                             <Grid item xs={12}>
                                 <Grid container spacing={2} justifyContent="center">
                                     <Grid item>
-                                        <Button variant="contained" color="primary" onClick={handleConfirmButtonClick}>confirm</Button>
+                                        <Button variant="contained" color="primary" onClick={handleConfirmButtonClick} disabled={reserveData.status === 'menunggu'}>
+                                            Confirm
+                                        </Button>
                                     </Grid>
                                 </Grid>
                             </Grid>
