@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from 'react-bootstrap';
+import img from '../assets/img/admin-icon.svg';
 
-const Navbar = ({ setSearchTerm }) => {
+const Navbar = ({ setSearchTerm, exportToExcel, exportToPdf }) => {
     const [searchInput, setSearchInput] = useState('');
 
     // Use useEffect to trigger search whenever searchInput` changes
@@ -16,35 +18,51 @@ const Navbar = ({ setSearchTerm }) => {
         window.location.href = '/login';
     };
 
+    const currentPath = window.location.pathname;
+
     return (
         <nav className="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
 
             <button id="sidebarToggleTop" className="btn btn-link d-md-none rounded-circle mr-3">
                 <i className="fa fa-bars"></i>
             </button>
-            <form className="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
-                <div className="input-group">
-                    <input
-                        className="form-control bg-light border-0 small"
-                        placeholder="Search for..."
-                        aria-label="Search"
-                        aria-describedby="basic-addon2"
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                    />
-                    <div className="input-group-append">
-                        <button className="btn btn-primary" type="button">
-                            <i className="fas fa-search fa-sm"></i>
-                        </button>
-                    </div>
+
+            {/* Conditional rendering based on the current path */}
+            {currentPath === '/dashboard' ? (
+                <div>
+                    <Button variant="success" onClick={exportToExcel} style={{ float: 'right', marginRight: '10px' }}>
+                        Export to Excel
+                    </Button>
+                    <Button variant="danger" onClick={exportToPdf} style={{ float: 'right', marginRight: '10px' }}>
+                        Export to PDF
+                    </Button>
                 </div>
-            </form>
+            ) : (
+                <form className="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                    <div className="input-group">
+                        <input
+                            className="form-control bg-light border-0 small"
+                            placeholder="Search for..."
+                            aria-label="Search"
+                            aria-describedby="basic-addon2"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                        />
+                        <div className="input-group-append">
+                            <button className="btn btn-primary" type="button">
+                                <i className="fas fa-search fa-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            )}
+
             <ul className="navbar-nav ml-auto">
                 <li className="nav-item dropdown no-arrow">
                     <button className="nav-link dropdown-toggle" id="userDropdown" role="button" data-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
                         <span className="mr-2 d-none d-lg-inline text-gray-600 small">Admin</span>
-                        <img className="img-profile rounded-circle" src="https://source.unsplash.com/QAB-WJcbgJk/60x60" alt="profile" />
+                        <img className="img-profile rounded-circle" src={img} width="60" height="60" alt="admin" />
                     </button>
                     <div className="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                         aria-labelledby="userDropdown">

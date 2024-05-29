@@ -209,7 +209,7 @@ const ReturnPage = () => {
                                         <Button variant="contained" color="primary" onClick={handleReturnButtonClick}>Return</Button>
                                     </Grid>
                                     <Grid item>
-                                        <Button variant="contained" color="secondary" disabled={lateDays > 0 || borrowData.borrow_code.startsWith('KD-P')} onClick={handleExtendButtonClick}>Extend</Button>
+                                        <Button variant="contained" color="secondary" disabled={lateDays > 0 || borrowData.borrow_code.startsWith('KD-R')} onClick={handleExtendButtonClick}>Extend</Button>
                                     </Grid>
                                 </Grid>
                             </Grid>

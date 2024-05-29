@@ -41,25 +41,33 @@ const QRScanner = () => {
                     let responseReservasi = null;
 
                     if (result.startsWith('KD-P')) {
-                        console.log('masuk pengembalian' + scanResult);
-                        responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/' + result, {
-                            method: 'GET',
-                        });
+                        const isAdmin = localStorage.getItem('role') === 'admin';
 
-                        if (responsePeminjaman.ok) {
-                            const data = await responsePeminjaman.json();
+                        if (isAdmin) {
+                            responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/' + result, {
+                                method: 'GET',
+                            });
 
-                            setTimeout(() => {
+                            if (responsePeminjaman.ok) {
+                                const data = await responsePeminjaman.json();
+
+                                setTimeout(() => {
+                                    setIsLoading(false);
+                                    navigate('/get-loan', { state: { dataPeminjaman: data } });
+                                }, 1000); // Set the duration of loading here (in milliseconds)
+
+                            } else {
+                                setMessage('Data borrowed books not found');
+                                setNotFound(true);
                                 setIsLoading(false);
-                                navigate('/get-loan', { state: { dataPeminjaman: data } });
-                            }, 1000); // Set the duration of loading here (in milliseconds)
-
+                                setOpenSnackbar(true);
+                                console.error('Error fetching borrowed books:', responsePeminjaman.statusText);
+                            }
                         } else {
-                            setMessage('Data borrowed books not found');
+                            setMessage('You are not allowed to access this feature');
                             setNotFound(true);
                             setIsLoading(false);
                             setOpenSnackbar(true);
-                            console.error('Error fetching borrowed books:', responsePeminjaman.statusText);
                         }
 
                     } else if (!isNaN(result)) {

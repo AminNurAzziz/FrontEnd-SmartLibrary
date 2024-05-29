@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form, } from 'react-bootstrap';
+import { Modal, Button, Form, Pagination } from 'react-bootstrap';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import SidebarAdmin from './SideBarAdmin';
@@ -7,6 +7,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const ReadStudentPage = () => {
     const [students, setStudents] = useState([]);
@@ -29,6 +32,8 @@ const ReadStudentPage = () => {
     const navigate = useNavigate();
     const [sortColumn, setSortColumn] = useState('');
     const [sortOrder, setSortOrder] = useState('asc');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -148,6 +153,52 @@ const ReadStudentPage = () => {
 
     const sortedStudents = sortData(filteredStudents);
 
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = sortedStudents.slice(indexOfFirstItem, indexOfLastItem);
+
+    const totalPages = Math.ceil(sortedStudents.length / itemsPerPage);
+    const paginate = (pageNumber) => {
+        if (pageNumber > 0 && pageNumber <= totalPages) {
+            setCurrentPage(pageNumber);
+        }
+    };
+
+    const exportToExcel = () => {
+        const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+        const fileExtension = '.xlsx';
+        const fileName = 'students';
+        const ws = XLSX.utils.json_to_sheet(students);
+        const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const data = new Blob([excelBuffer], { type: fileType });
+        const url = URL.createObjectURL(data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName + fileExtension;
+        a.click();
+    }
+
+    const exportToPdf = () => {
+        const unit = 'pt';
+        const size = 'A4';
+        const orientation = 'landscape';
+        const doc = new jsPDF(orientation, unit, size);
+        doc.setFontSize(15);
+        const title = 'Students';
+        const headers = [['No', 'NIM', 'Name', 'Major', 'Class', 'Email', 'Status']];
+
+        const data = students.map((student, index) => [index + 1, student.nim, student.nama_mhs, student.prodi_mhs, student.kelas_mhs, student.email_mhs, student.status_mhs]);
+        let content = {
+            startY: 50,
+            head: headers,
+            body: data
+        };
+        doc.text(title, 40, 40);
+        doc.autoTable(content);
+        doc.save('students.pdf');
+    }
+
     return (
         <div id="wrapper">
             <SidebarAdmin />
@@ -156,8 +207,17 @@ const ReadStudentPage = () => {
                     <Navbar setSearchTerm={setSearchTerm} />
                     <div className="container-fluid">
                         <div className="card shadow mb-4">
-                            <div className="card-header py-3">
+
+                            <div className="card-header py-2 d-flex justify-content-between align-items-center" style={{ height: '60px' }}>
                                 <h6 className="m-0 font-weight-bold text-primary">Data Mahasiswa</h6>
+                                <div>
+                                    <Button variant="success" onClick={exportToExcel} style={{ float: 'right' }}>
+                                        Download Excel
+                                    </Button>
+                                    <Button variant="danger" onClick={exportToPdf} style={{ float: 'right', marginRight: '10px' }}>
+                                        Download PDF
+                                    </Button>
+                                </div>
                             </div>
                             <div className="card-body">
                                 <div className="table-responsive">
@@ -204,7 +264,7 @@ const ReadStudentPage = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {sortedStudents.map((student, index) => (
+                                            {currentItems.map((student, index) => (
                                                 <tr key={student.id} style={{ cursor: 'pointer', backgroundColor: student.status_mhs === 'active' ? '#e0f2f1' : '#ffebee' }}>
                                                     <td>{student.nim}</td>
                                                     <td>{student.nama_mhs}</td>
@@ -225,6 +285,23 @@ const ReadStudentPage = () => {
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+                                <Pagination>
+                                    <Pagination.First onClick={() => paginate(1)} disabled={currentPage === 1} />
+                                    <Pagination.Prev onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} />
+                                    {Array.from({ length: totalPages }, (_, index) => (
+                                        <Pagination.Item
+                                            key={index + 1}
+                                            onClick={() => paginate(index + 1)}
+                                            active={index + 1 === currentPage}
+                                        >
+                                            {index + 1}
+                                        </Pagination.Item>
+                                    ))}
+                                    <Pagination.Next onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} />
+                                    <Pagination.Last onClick={() => paginate(totalPages)} disabled={currentPage === totalPages} />
+                                </Pagination>
                             </div>
                         </div>
                     </div>

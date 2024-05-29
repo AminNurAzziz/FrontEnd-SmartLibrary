@@ -6,6 +6,10 @@ import MuiAlert from '@mui/material/Alert';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 function HistoryPeminjamanList() {
     const [historyPeminjaman, setHistoryPeminjaman] = useState([]);
@@ -17,7 +21,7 @@ function HistoryPeminjamanList() {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(5);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [sortColumn, setSortColumn] = useState(''); // Define sortColumn state
     const [sortOrder, setSortOrder] = useState('asc'); // Define sortOrder state
     const navigate = useNavigate();
@@ -121,6 +125,63 @@ function HistoryPeminjamanList() {
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+
+    const downloadExcel = () => {
+        const worksheet = XLSX.utils.json_to_sheet(historyPeminjaman);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "HistoryPeminjaman");
+        XLSX.writeFile(workbook, "HistoryPeminjaman.xlsx");
+    };
+
+    const downloadPDF = () => {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const title = "Laporan Data Peminjaman";
+        const date = new Date().toLocaleDateString();
+
+        // Add title
+        doc.setFontSize(18);
+        doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+        // Add date
+        doc.setFontSize(12);
+        doc.text(`Tanggal: ${date}`, pageWidth - 20, 30, { align: 'right' });
+
+        // Add a line break
+        doc.setLineWidth(0.5);
+        doc.line(10, 35, pageWidth - 10, 35);
+
+        // Add table
+        const tableData = historyPeminjaman.map(row => [
+            row.nim,
+            row.book_title,
+            row.borrowing_code,
+            row.borrowing_date,
+            row.return_date,
+            row.status
+        ]);
+
+        doc.autoTable({
+            head: [['NIM', 'Judul Buku', 'Kode Peminjaman', 'Tanggal Peminjaman', 'Tanggal Pengembalian', 'Status']],
+            body: tableData,
+            startY: 40,
+            theme: 'striped',
+            headStyles: { fillColor: [22, 160, 133], fontStyle: 'bold' },
+            styles: { fontSize: 10, cellPadding: 3 }
+        });
+
+        // Add footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(10);
+            doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+        }
+
+        doc.save('HistoryPeminjaman.pdf');
+    };
+
+
     return (
         <div id="wrapper">
             <SidebarAdmin />
@@ -129,11 +190,20 @@ function HistoryPeminjamanList() {
                     <Navbar setSearchTerm={setSearchTerm} />
                     <div className="container-fluid">
                         <div className="card shadow mb-4">
-                            <div className="card-header py-3">
+                            <div className="card-header py-2 d-flex justify-content-between align-items-center" style={{ height: '60px' }}>
                                 <h6 className="m-0 font-weight-bold text-primary">Data Peminjaman</h6>
+                                <div>
+                                    <Button variant="success" onClick={downloadExcel} style={{ float: 'right' }}>
+                                        Download Excel
+                                    </Button>
+                                    <Button variant="danger" onClick={downloadPDF} style={{ float: 'right', marginRight: '10px' }}>
+                                        Download PDF
+                                    </Button>
+                                </div>
                             </div>
                             <div className="card-body">
                                 <div className="table-responsive">
+
                                     <table className="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                         <thead>
                                             <tr>

@@ -6,6 +6,9 @@ import MuiAlert from '@mui/material/Alert';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar'; // Import the Navbar component
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const DashboardPage = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -65,12 +68,56 @@ const DashboardPage = () => {
     const [isMonthlyChartVisible, setIsMonthlyChartVisible] = useState(true);
     const [isPieChartVisible, setIsPieChartVisible] = useState(true);
 
+    const exportToExcel = () => {
+        const workbook = XLSX.utils.book_new();
+        const sheet = XLSX.utils.json_to_sheet(dashboardDatas.four_books_most_borrowed);
+        XLSX.utils.book_append_sheet(workbook, sheet, 'Most Borrowed Books');
+        XLSX.writeFile(workbook, 'most_borrowed_books.xlsx');
+
+        exportToExcelMonthly();
+    }
+
+    const exportToExcelMonthly = () => {
+        const workbook = XLSX.utils.book_new();
+        const sheet = XLSX.utils.json_to_sheet(dashboardDatas.monthly_borrowing_trend);
+        XLSX.utils.book_append_sheet(workbook, sheet, 'Monthly Borrowing Trend');
+        XLSX.writeFile(workbook, 'monthly_borrowing_trend.xlsx');
+    }
+
+    const exportToPdf = () => {
+        const doc = new jsPDF();
+        const title = 'Top 4 Books Favorite';
+        const date = new Date().toLocaleDateString();
+        doc.text(title, 14, 10);
+        doc.text(date, 14, 20);
+        doc.autoTable({
+            head: [['Book Title', 'Borrow Count']],
+            body: dashboardDatas.four_books_most_borrowed.map(({ book_title, borrow_count }) => [book_title, borrow_count])
+        });
+        doc.save('Top 4 Books Favorite.pdf');
+
+        exportToPdfMonthly();
+    }
+
+    const exportToPdfMonthly = () => {
+        const title = 'Monthly Borrowing Trend';
+        const date = new Date().toLocaleDateString();
+        const doc = new jsPDF();
+        doc.text(title, 14, 10);
+        doc.text(date, 14, 20);
+        doc.autoTable({
+            head: [['Month', 'Borrow Count']],
+            body: dashboardDatas.monthly_borrowing_trend.map(({ month, borrow_count }) => [month, borrow_count])
+        });
+        doc.save('Laporan Trend Peminjaman.pdf');
+    }
+
     return (
         <div id="wrapper">
             <SidebarAdmin />
             <div id="content-wrapper" className="d-flex flex-column">
                 <div id="content">
-                    <Navbar setSearchTerm={() => { }} />
+                    <Navbar setSearchTerm={() => { }} exportToExcel={exportToExcel} exportToPdf={exportToPdf} />
                     <div className="container-fluid">
                         <Snackbar
                             open={openSnackbar}
