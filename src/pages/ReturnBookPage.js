@@ -39,7 +39,7 @@ const ReturnPage = () => {
     const handleReturnButtonClick = async () => {
         try {
             setIsLoading(true);
-            const response = await fetch(`http://127.0.0.1:8000/api/pengembalian-buku/${borrowData.borrow_code}`, {
+            const response = await fetch(`https://202.10.36.225/api/pengembalian-buku/${borrowData.borrow_code}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'
@@ -60,7 +60,7 @@ const ReturnPage = () => {
     const handleExtendButtonClick = async () => {
         try {
             setIsLoading(true);
-            const response = await fetch(`http://127.0.0.1:8000/api/perpanjangan-buku/${borrowData.borrow_code}`, {
+            const response = await fetch(`https://202.10.36.225/api/perpanjangan-buku/${borrowData.borrow_code}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'

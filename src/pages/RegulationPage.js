@@ -22,7 +22,7 @@ const RegulationPage = () => {
 
     const fetchRegulationData = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/regulation');
+            const response = await fetch('https://202.10.36.225/api/regulation');
             if (!response.ok) {
                 throw new Error('Failed to fetch regulation data');
             }
@@ -50,7 +50,7 @@ const RegulationPage = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/regulation', {
+            const response = await fetch('https://202.10.36.225/api/regulation', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'

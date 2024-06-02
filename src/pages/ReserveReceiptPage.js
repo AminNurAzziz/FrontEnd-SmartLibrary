@@ -37,7 +37,7 @@ const ReturnPage = () => {
         try {
             setIsLoading(true);
 
-            const response = await fetch(`http://127.0.0.1:8000/api/konfirmasi-reservasi/${reserveData.reservation_code}`, {
+            const response = await fetch(`https://202.10.36.225/api/konfirmasi-reservasi/${reserveData.reservation_code}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

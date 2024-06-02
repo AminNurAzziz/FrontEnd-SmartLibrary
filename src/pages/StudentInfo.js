@@ -72,7 +72,7 @@ const StudentInfo = () => {
     // const handleBorrowBooks = () => {
     //     setLoading(true);
     //     // Lakukan permintaan POST ke URL API
-    //     fetch('http://127.0.0.1:8000/api/peminjaman-buku', {
+    //     fetch('https://202.10.36.225/api/peminjaman-buku', {
     //         method: 'POST',
     //         headers: {
     //             'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ const StudentInfo = () => {
         if (reserveBooks.length > 0) {
             const reservationData = reserveBooks.map((book) => ({ book_code: book.book_code, max_reserve_days: regulationData.max_reserve_days }));
             requests.push(
-                fetch('http://127.0.0.1:8000/api/reservasi-buku', {
+                fetch('https://202.10.36.225/api/reservasi-buku', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ const StudentInfo = () => {
 
         if (borrowBooks.length > 0) {
             requests.push(
-                fetch('http://127.0.0.1:8000/api/peminjaman-buku', {
+                fetch('https://202.10.36.225/api/peminjaman-buku', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

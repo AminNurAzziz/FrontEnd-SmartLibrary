@@ -40,7 +40,7 @@ function HistoryPeminjamanList() {
 
     const fetchHistoryPeminjaman = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/allhistory-peminjaman');
+            const response = await fetch('https://202.10.36.225/api/allhistory-peminjaman');
             if (!response.ok) {
                 throw new Error('Failed to fetch data');
             }
@@ -54,7 +54,7 @@ function HistoryPeminjamanList() {
 
     const handleDeleteConfirmed = async () => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/history-peminjaman/${deleteBorrowingCode}`, {
+            const response = await fetch(`https://202.10.36.225/api/history-peminjaman/${deleteBorrowingCode}`, {
                 method: 'DELETE'
             });
 

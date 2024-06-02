@@ -44,7 +44,7 @@ const QRScanner = () => {
                         const isAdmin = localStorage.getItem('role') === 'admin';
 
                         if (isAdmin) {
-                            responsePeminjaman = await fetch('http://127.0.0.1:8000/api/pengembalian-buku/' + result, {
+                            responsePeminjaman = await fetch('https://202.10.36.225/api/pengembalian-buku/' + result, {
                                 method: 'GET',
                             });
 
@@ -71,12 +71,12 @@ const QRScanner = () => {
                         }
 
                     } else if (!isNaN(result)) {
-                        response = await fetch('http://127.0.0.1:8000/api/student', {
+                        response = await fetch('https://202.10.36.225/api/student', {
                             method: 'GET',
                             headers: headers
                         });
 
-                        responseRegulation = await fetch('http://127.0.0.1:8000/api/regulation', {
+                        responseRegulation = await fetch('https://202.10.36.225/api/regulation', {
                             method: 'GET',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ const QRScanner = () => {
                         }
                     } else if (result.startsWith('KD-R')) {
                         console.log('masuk reservasi' + scanResult);
-                        responseReservasi = await fetch('http://127.0.0.1:8000/api/reservasi-buku/' + result, {
+                        responseReservasi = await fetch('https://202.10.36.225/api/reservasi-buku/' + result, {
                             method: 'GET',
                         });
 

@@ -26,7 +26,7 @@ const AdminLoginPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://127.0.0.1:8000/api/auth/login', {
+            const response = await axios.post('https://202.10.36.225/api/auth/login', {
                 email, // Change username to email
                 password
             });

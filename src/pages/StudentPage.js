@@ -50,7 +50,7 @@ const ReadStudentPage = () => {
 
     const fetchData = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/allstudent');
+            const response = await fetch('https://202.10.36.225/api/allstudent');
             if (!response.ok) {
                 throw new Error('Failed to fetch data');
             }
@@ -68,7 +68,7 @@ const ReadStudentPage = () => {
 
     const handleDelete = async (nim) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/delete-student/${nim}`, {
+            const response = await fetch(`https://202.10.36.225/api/delete-student/${nim}`, {
                 method: 'DELETE'
             });
             if (!response.ok) {
@@ -94,7 +94,7 @@ const ReadStudentPage = () => {
                 email: editStudent.email_mhs,
                 status: editStudent.status_mhs
             };
-            const response = await fetch(`http://127.0.0.1:8000/api/update-student`, {
+            const response = await fetch(`https://202.10.36.225/api/update-student`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

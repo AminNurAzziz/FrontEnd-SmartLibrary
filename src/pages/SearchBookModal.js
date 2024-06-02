@@ -15,14 +15,14 @@ const SearchBookModal = ({ open, onClose, onSearch, notFound }) => {
             setLoading(true); // Set loading state to true when starting the search
 
             // Memanggil API untuk mencari buku
-            const bookResponse = await fetch(`http://127.0.0.1:8000/api/buku?kode=${searchTerm}`);
+            const bookResponse = await fetch(`https://202.10.36.225/api/buku?kode=${searchTerm}`);
             if (!bookResponse.ok) {
                 throw new Error('Network response for book search was not ok');
             }
             const bookData = await bookResponse.json();
 
             // Memanggil API untuk mengambil aturan peminjaman
-            const regulationResponse = await fetch('http://127.0.0.1:8000/api/regulation');
+            const regulationResponse = await fetch('https://202.10.36.225/api/regulation');
             if (!regulationResponse.ok) {
                 throw new Error('Network response for regulation fetch was not ok');
             }

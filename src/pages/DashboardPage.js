@@ -42,7 +42,7 @@ const DashboardPage = () => {
 
     const fetchDataDashboard = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/dashboard');
+            const response = await fetch('https://202.10.36.225/api/dashboard');
             if (response.ok) {
                 const data = await response.json();
                 setDashboardDatas(data.data);
