@@ -189,7 +189,7 @@ const QRScanner = () => {
             <Header />
             <div className="qr-scanner-container" style={{ marginTop: '50px', textAlign: 'center' }}>
                 <Typography variant="h4" sx={{ textTransform: 'capitalize', color: 'black', fontWeight: '550', marginBottom: '1rem' }}>
-                    Please scan your KTM!
+                    Please scan your QR Code!
                 </Typography>
                 <Typography mt={3} mb={3} variant="body2" sx={{ color: 'GrayText' }}>
                     Scan or enter NIM to start borrowing available books

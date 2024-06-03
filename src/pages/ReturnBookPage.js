@@ -24,6 +24,7 @@ const ReturnPage = () => {
     const studentData = borrowingData?.borrower;
     const borrowData = borrowingData?.borrow_data;
     const [lateDays, setLateDays] = useState(0);
+    const [regulationData, setRegulationData] = useState(null);
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -34,6 +35,28 @@ const ReturnPage = () => {
         }
         // Update late days state with the value from borrowData.late_days
         setLateDays(borrowData?.late_days || 0);
+
+        // Fetch regulation data from the API
+        const fetchRegulationData = async () => {
+            try {
+                const response = await fetch('https://202.10.36.225/api/regulation', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setRegulationData(data);
+                } else {
+                    console.error('Failed to fetch regulation data');
+                }
+            } catch (error) {
+                console.error('Error fetching regulation data:', error);
+            }
+        };
+
+        fetchRegulationData(); // Call the fetchRegulationData function
     }, [location.state, navigate]);
 
     const handleReturnButtonClick = async () => {
@@ -114,15 +137,15 @@ const ReturnPage = () => {
                                                     </TableRow>
                                                     <TableRow>
                                                         <TableCell><strong>Email:</strong></TableCell>
-                                                        <TableCell>azziz@example.com</TableCell>
+                                                        <TableCell>{studentData.email ? studentData.email : 'No email'}</TableCell>
                                                     </TableRow>
                                                     <TableRow>
                                                         <TableCell><strong>Major:</strong></TableCell>
-                                                        <TableCell>Teknologi Informasi</TableCell>
+                                                        <TableCell>{studentData.major ? studentData.major : 'No major'}</TableCell>
                                                     </TableRow>
                                                     <TableRow>
                                                         <TableCell><strong>Status:</strong></TableCell>
-                                                        <TableCell>Active</TableCell>
+                                                        <TableCell>{studentData.status ? studentData.status : 'No status'}</TableCell>
                                                     </TableRow>
                                                 </TableBody>
                                             </Table>
@@ -174,6 +197,7 @@ const ReturnPage = () => {
                                                 <TableBody>
                                                     <TableRow>
                                                         <TableCell><strong>Borrow Code:</strong></TableCell>
+                                                        {/* //TODO Change borrow_code to borrow_code_detail */}
                                                         <TableCell>{borrowData.borrow_code}</TableCell>
                                                     </TableRow>
                                                     <TableRow>
@@ -205,11 +229,25 @@ const ReturnPage = () => {
                             {/* Buttons */}
                             <Grid item xs={12}>
                                 <Grid container spacing={2} justifyContent="center">
+                                    {localStorage.getItem('role') === 'admin' && (
+                                        <Grid item>
+                                            <Button variant="contained" color="primary" onClick={handleReturnButtonClick}>Return</Button>
+                                        </Grid>
+                                    )}
                                     <Grid item>
-                                        <Button variant="contained" color="primary" onClick={handleReturnButtonClick}>Return</Button>
-                                    </Grid>
-                                    <Grid item>
-                                        <Button variant="contained" color="secondary" disabled={lateDays > 0 || borrowData.borrow_code.startsWith('KD-R')} onClick={handleExtendButtonClick}>Extend</Button>
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            disabled={
+                                                lateDays > 0 ||  // Check if there are late days
+                                                borrowData.borrow_code.startsWith('KD-R') || // Check if the borrow code starts with 'KD-R'
+                                                (regulationData && // Check if regulationData is available
+                                                    (new Date(borrowData.return_date) - new Date(borrowData.borrow_date)) / (1000 * 3600 * 24) > regulationData.max_loan_days) // Check if the difference between return date and borrow date is greater than max_loan_days
+                                            }
+                                            onClick={handleExtendButtonClick}
+                                        >
+                                            Extend
+                                        </Button>
                                     </Grid>
                                 </Grid>
                             </Grid>

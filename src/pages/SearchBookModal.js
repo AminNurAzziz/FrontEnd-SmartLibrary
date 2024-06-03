@@ -76,7 +76,7 @@ const SearchBookModal = ({ open, onClose, onSearch, notFound }) => {
                     Search Book
                 </Typography>
                 <TextField
-                    label="Book Code or Title"
+                    label="Book Code"
                     variant="outlined"
                     fullWidth
                     value={searchTerm}

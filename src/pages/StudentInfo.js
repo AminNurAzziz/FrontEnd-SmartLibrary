@@ -40,8 +40,10 @@ const StudentInfo = () => {
     };
 
     const handleSelectBook = (bookData) => {
-        console.log('Regulation data:', regulationData.max_loan_books);
         if (borrowedBooks.length >= regulationData.max_loan_books) {
+            handleNotFound();
+            setSnackbarMessage('You have reached the maximum limit of borrowed books');
+        } else if (searchResults.length >= regulationData.max_loan_books) {
             handleNotFound();
             setSnackbarMessage('You have reached the maximum limit of borrowed books');
         } else {
@@ -308,7 +310,7 @@ const StudentInfo = () => {
                                 <Card>
                                     <CardContent sx={{ backgroundColor: '#ffdac1' }}>
                                         {/* <Typography variant="h6"> {studentData.class}</Typography> */}
-                                        <Typography variant="h6"><b>{studentData.nim}</b></Typography>
+                                        <Typography variant="h6">{studentData.nim}</Typography>
                                         <Typography variant="h6"><b>NIM</b></Typography>
 
                                     </CardContent>
@@ -346,7 +348,6 @@ const StudentInfo = () => {
                                     <TableCell sx={{ color: '#0f1f40', fontWeight: 'bold' }}>Return Date</TableCell>
                                     <TableCell sx={{ color: '#0f1f40', fontWeight: 'bold' }}>Status</TableCell>
                                     <TableCell sx={{ color: '#0f1f40', fontWeight: 'bold' }}>Action</TableCell>
-
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -355,7 +356,6 @@ const StudentInfo = () => {
                             </TableBody>
                             <TableBody>
                                 {searchResults.map((bookDatas, index) => renderSearchBook(bookDatas, index, handleRemoveBook, handleExtendBook))}
-
                             </TableBody>
                         </Table>
                     </TableContainer>
@@ -443,9 +443,9 @@ const renderSearchBook = (bookDatas, index, handleRemoveBook, handleExtendBook) 
             <TableCell>
                 <Button
                     variant="contained"
-                    color="secondary"
+                    color="warning"
                     onClick={() => handleRemoveBook(bookDatas.id)}
-                    sx={{ mr: 2 }}
+                    sx={{ mr: 2, backgroundColor: 'red' }} // Mengatur warna latar belakang menjadi merah
                 >
                     Remove
                 </Button>
@@ -453,7 +453,7 @@ const renderSearchBook = (bookDatas, index, handleRemoveBook, handleExtendBook) 
                     variant="contained"
                     color="primary"
                     onClick={() => handleExtendBook(bookDatas.id)}
-                    disabled={bookDatas.action === 'Reserve'}
+                    disabled={bookDatas.action === 'Reserve' || bookDatas.extended}
                 >
                     Extend
                 </Button>
