@@ -40,7 +40,8 @@ const StudentInfo = () => {
     };
 
     const handleSelectBook = (bookData) => {
-        if (borrowedBooks.length >= regulationData.max_borrowed_books) {
+        console.log('Regulation data:', regulationData.max_loan_books);
+        if (borrowedBooks.length >= regulationData.max_loan_books) {
             handleNotFound();
             setSnackbarMessage('You have reached the maximum limit of borrowed books');
         } else {
